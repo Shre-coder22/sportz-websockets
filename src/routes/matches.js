@@ -1,6 +1,7 @@
-import { createMatchSchema, listMatchesQuerySchema } from "../validation/matches";
-import { Router } from express;
+import { createMatchSchema, listMatchesQuerySchema } from "../validation/matches.js";
+import { Router } from "express";
 import { db } from "../db/db.js";
+import { matches } from "../db/schema.js";
 import { getMatchStatus } from "../utils/match-status.js";
 import { desc } from "drizzle-orm";
 
@@ -12,7 +13,7 @@ matchRouter.get('/', async(req, res) => {
     const parsed = listMatchesQuerySchema.safeParse(req.query);
 
     if(!parsed.success){
-        return res.status(400).json({ error: 'Inv Query', details: JSON.stringify(parsed.error) });
+        return res.status(400).json({ error: 'Inv Query', details: parsed.error.issues });
     }
 
     const limit = Math.min(parsed.data.limit ?? 50, MAX_LIMIT);
@@ -30,7 +31,7 @@ matchRouter.post('/', async (req, res) => {
     const parsed = createMatchSchema.safeParse(req.body);
 
     if(!parsed.success){
-        return res.status(400).json({ error: 'Inv Payload', details: JSON.stringify(parsed.error) });
+        return res.status(400).json({ error: 'Inv Payload', details: parsed.error.issues });
     }
     else{
         try {
@@ -40,7 +41,7 @@ matchRouter.post('/', async (req, res) => {
                 endTime: new Date(parsed.data.endTime),
                 homeScore: parsed.data.homeScore ?? 0,
                 awayScore: parsed.data.awayScore ?? 0,
-                status: getMatchStatus(startTime, endTime),
+                status: getMatchStatus(parsed.data.startTime, parsed.data.endTime),
             }).returning;
 
             res.status(201).json({ data: event });
