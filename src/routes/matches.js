@@ -42,7 +42,15 @@ matchRouter.post('/', async (req, res) => {
                 homeScore: parsed.data.homeScore ?? 0,
                 awayScore: parsed.data.awayScore ?? 0,
                 status: getMatchStatus(parsed.data.startTime, parsed.data.endTime),
-            }).returning;
+            }).returning();
+
+            if (res.app.locals.broadcastMatchCreated) {
+                try {
+                    res.app.locals.broadcastMatchCreated(event);
+                } catch (e) {
+                    console.error("Broadcast Error:", e);
+                }
+            }
 
             res.status(201).json({ data: event });
         } catch (e) {
