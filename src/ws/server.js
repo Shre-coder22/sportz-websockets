@@ -1,5 +1,5 @@
 import { WebSocket,  WebSocketServer } from "ws";
-import { wsArcjet } from "../arcjet";
+import { wsArcjet } from "../arcjet.js";
 
 const sendJson = (socket, payload) => {
     if(socket.readyState !==  WebSocket.OPEN) return;
@@ -22,15 +22,18 @@ export const attachWebSocketServer = (server) => {
                 const decision = await wsArcjet.protect(req);
                 
                 if(decision.isDenied()){
-                    const code = decision.reason.isRateLimit() ? 1013 : 1008;
-                    const reason = decision.reason.isRateLimit() ? 'Rate limit exceeded' : 'Access Denied';
-                                
-                    socket.close(code, reason);
+                    if(decision.reason.isRateLimit()) {
+                        socket.write('HTTP/1.1 429 Too many requests');
+                    } else {
+                        socket.write('HTTP/1.1 403 Forbidden');
+                    }
+                    socket.destroy();
                     return;
-                }    
+                }
             } catch (error) {
                 console.error(error);
-                socket.close(code, reason);
+                socket.write('HTTP/1.1 500 Internal Server Error');
+                socket.destroy();
                 return;
             }
         }

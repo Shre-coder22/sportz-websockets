@@ -16,7 +16,7 @@ app.get('/', (req, res) => {
     console.log('Hello from server!');
 });
 
-app.use(securityMiddleware);
+app.use(securityMiddleware());
 
 app.use('/matches', matchRouter);
 
